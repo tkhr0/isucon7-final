@@ -1,0 +1,27 @@
+version: '3'
+services:
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: isudb
+      MYSQL_USER: local_user
+      MYSQL_PASSWORD: password
+      TZ: 'Asia/Tokyo'
+    ports:
+      - 3306:3306
+  web:
+    build: .
+    volumes:
+      - .:/myapp
+    environment:
+      DB_USER: local_user
+      DB_PASS: password
+      DB_DATABASE: isudb
+      DB_HOST: db
+      DB_PORT: 3306
+    ports:
+      - "9292:9292"
+    tty: true
+    depends_on:
+      - db
