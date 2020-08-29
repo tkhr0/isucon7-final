@@ -15,11 +15,11 @@ services:
     volumes:
       - .:/myapp
     environment:
-      DB_USER: local_user
-      DB_PASS: password
+      ISU_DB_USER: local_user
+      ISU_DB_PASSWORD: password
       DB_DATABASE: isudb
-      DB_HOST: db
-      DB_PORT: 3306
+      ISU_DB_HOST: db
+      ISU_DB_PORT: 3306
     ports:
       - "9292:9292"
     tty: true
