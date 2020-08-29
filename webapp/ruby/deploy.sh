@@ -11,4 +11,4 @@ git pull
 # start puma
 cd /home/ubuntu/work/isucon7-final/webapp/ruby
 bundle
-bundle exec puma -C puma_config.rb
+bundle exec puma -C puma_config.rb -e production
