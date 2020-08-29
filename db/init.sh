@@ -1,5 +1,4 @@
 #!/bin/bash
-cd $(dirname $0)
-mysql --default-character-set=utf8mb4 -uroot < $(pwd)/drop.sql
-mysql --default-character-set=utf8mb4 -uroot isudb < $(pwd)/isudb.sql
-mysql --default-character-set=utf8mb4 -uroot isudb < $(pwd)/m_item.sql
+mysql -h 127.0.0.1 -u local_user -ppassword --default-character-set=utf8mb4 < ./drop.sql
+mysql -h 127.0.0.1 -u local_user -ppassword --default-character-set=utf8mb4 isudb < ./isudb.sql
+mysql -h 127.0.0.1 -u local_user -ppassword --default-character-set=utf8mb4 isudb < ./m_item.sql
