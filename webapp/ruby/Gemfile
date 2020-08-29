@@ -8,6 +8,10 @@ gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'newrelic_rpm'
 
+group :development do
+  gem 'lineprof'
+end
+
 group :test do
   gem 'rspec'
 end

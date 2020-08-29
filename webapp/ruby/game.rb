@@ -475,6 +475,16 @@ class Game
   end
 
   def call(env)
+    if ENV['RACK_ENV'] == 'development'
+      Lineprof.profile do
+        call_main(env)
+      end
+    else
+      call_main(env)
+    end
+  end
+
+  def call_main(env)
     return @app.call(env) unless websocket?(env)
 
     ws = Faye::WebSocket.new(env)
