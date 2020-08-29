@@ -6,6 +6,7 @@ ps aux | grep "puma 3" | grep -v grep | awk '{ print "kill -9", $2 }' | sh
 
 # git
 cd /home/ubuntu/work/isucon7-final
+git checkout .
 git pull
 
 # start puma
