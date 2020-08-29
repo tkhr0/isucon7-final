@@ -6,7 +6,7 @@ class App < Sinatra::Base
   use Game
 
   configure do
-    set :public_folder, File.expand_path('../../public', __FILE__)
+    set :public_folder, File.expand_path('../public/', __FILE__)
   end
 
   configure :development do
