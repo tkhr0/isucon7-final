@@ -7,7 +7,8 @@ ps aux | grep "puma 3" | grep -v grep | awk '{ print "kill -9", $2 }' | sh
 # git
 cd /home/ubuntu/cco
 git checkout .
-git pull
+git fetch origin
+git reset --hard origin/master
 
 # start puma
 cd /home/ubuntu/cco/webapp/ruby
