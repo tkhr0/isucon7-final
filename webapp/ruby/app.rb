@@ -1,8 +1,13 @@
 require 'erb'
 require 'sinatra/base'
 require './game'
+require 'stackprof'
 
 class App < Sinatra::Base
+  use StackProf::Middleware, enabled: true,
+                             mode: :cpu,
+                             interval: 1000,
+                             save_every: 5
   use Game
 
   configure do

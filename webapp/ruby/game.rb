@@ -475,13 +475,7 @@ class Game
   end
 
   def call(env)
-    if ENV['RACK_ENV'] == 'development'
-      Lineprof.profile do
-        call_main(env)
-      end
-    else
-      call_main(env)
-    end
+    call_main(env)
   end
 
   def call_main(env)
