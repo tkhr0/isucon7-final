@@ -165,8 +165,8 @@ RSpec.describe Game do
       let(:current_time) { 1 }
       let(:mitems) do
         {
-          1 => described_class::MItem.new(
-            item_id: 1,
+          2 => described_class::MItem.new(
+            item_id: 2,
             power1: 0,
             power2: 1,
             power3: 0,
@@ -185,7 +185,7 @@ RSpec.describe Game do
       end
       let(:buyings) do
         [
-          described_class::Buying.new(nil, 1, 1, 0)
+          described_class::Buying.new(nil, 2, 1, 0)
         ]
       end
 
@@ -204,7 +204,7 @@ RSpec.describe Game do
 
       it do
         expect(subject.on_sale[0]).to satisfy do |on_sale|
-          on_sale.item_id == 1 && on_sale.time == 1000
+          on_sale.item_id == 2 && on_sale.time == 1000
         end
       end
 
@@ -224,7 +224,7 @@ RSpec.describe Game do
       let(:initial_isu) { '10000000' }
       let(:x) do
         described_class::MItem.new(
-          item_id: 1,
+          item_id: 10,
           power1: 1,
           power2: 1,
           power3: 3,
@@ -237,7 +237,7 @@ RSpec.describe Game do
       end
       let(:y) do
         described_class::MItem.new(
-          item_id: 2,
+          item_id: 11,
           power1: 1,
           power2: 1,
           power3: 7,
@@ -250,8 +250,8 @@ RSpec.describe Game do
       end
       let(:mitems) do
         {
-          1 => x,
-          2 => y,
+          10 => x,
+          11 => y,
         }
       end
       let(:addings) do
@@ -261,10 +261,10 @@ RSpec.describe Game do
       end
       let(:buyings) do
         [
-          described_class::Buying.new(nil, 1, 1, 100),
-          described_class::Buying.new(nil, 1, 2, 200),
-          described_class::Buying.new(nil, 2, 1, 300),
-          described_class::Buying.new(nil, 2, 2, 2001),
+          described_class::Buying.new(nil, 10, 1, 100),
+          described_class::Buying.new(nil, 10, 2, 200),
+          described_class::Buying.new(nil, 11, 1, 300),
+          described_class::Buying.new(nil, 11, 2, 2001),
         ]
       end
 
@@ -335,7 +335,7 @@ RSpec.describe Game do
 
       it do
         expect(subject.on_sale).to satisfy do |on_sale|
-          on_sale.any? { |o| o.item_id == 1 && o.time == 0 } && on_sale.any? { |o| o.item_id == 2 && o.time == 0 }
+          on_sale.any? { |o| o.item_id == 10 && o.time == 0 } && on_sale.any? { |o| o.item_id == 11 && o.time == 0 }
         end
       end
     end
@@ -381,7 +381,7 @@ end
 RSpec.describe Game::MItem do
   let(:item) do
     described_class.new(
-      item_id: 1,
+      item_id: 30,
       power1: 1,
       power2: 2,
       power3: 2,
@@ -410,6 +410,15 @@ RSpec.describe Game::MItem do
 
     it do
       is_expected.to eq(2048)
+    end
+
+    context '複数回' do
+      let(:count) { 1 }
+      it do
+        is_expected.to eq(2048)
+        is_expected.to eq(2048)
+        is_expected.to eq(2048)
+      end
     end
   end
 end

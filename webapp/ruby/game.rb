@@ -66,6 +66,11 @@ class Game
 
   class MItem
     attr_reader :item_id, :power1, :power2, :power3, :power3, :power4, :price1, :price2, :price3, :price4
+    @@cache_price = {
+      # item_id => {
+      #   count => price
+      # }
+    }
 
     def initialize(item_id:, power1:, power2:, power3:, power4:, price1:, price2:, price3:, price4:)
       @item_id = item_id
@@ -87,11 +92,25 @@ class Game
     end
 
     def get_price(count)
+      cache_item = @@cache_price[@item_id]
+      if cache_item.nil?
+        @@cache_price[@item_id] = {}
+      else
+        cache_per_count = cache_item[count]
+        unless cache_per_count.nil?
+          return cache_per_count
+        end
+      end
+
       # price(x):=(p3*x + 1) * p4 ** (p1*x + p2)
       s = @price3 * count + 1
       t = @price4 ** (@price1 * count + @price2)
-      s * t
+      price = s * t
+
+      @@cache_price[@item_id][count] = price
+      price
     end
+
   end
 
   class << self
@@ -449,9 +468,18 @@ class Game
 
       gs_adding = adding_at.values.map { |a| a }
 
-      gs_items = mitems.keys.map { |item_id| Item.new(item_id, item_bought[item_id], item_built0[item_id], big2exp(item_price[item_id]), item_power0[item_id], item_building[item_id]) }
+      gs_items = mitems.keys.map { |item_id|
+        Item.new(item_id,
+                 item_bought[item_id],
+                 item_built0[item_id],
+                 big2exp(item_price[item_id]),
+                 item_power0[item_id],
+                 item_building[item_id])
+      }
 
-      gs_on_sale = item_on_sale.map { |item_id, t| OnSale.new(item_id, t) }
+      gs_on_sale = item_on_sale.map { |item_id, t|
+        OnSale.new(item_id, t)
+      }
 
       GameStatus.new(0, gs_adding, schedule, gs_items, gs_on_sale)
     end
