@@ -66,6 +66,8 @@ class Game
 
   class MItem
     attr_reader :item_id, :power1, :power2, :power3, :power3, :power4, :price1, :price2, :price3, :price4
+    @@cache_power = {
+    }
     @@cache_price = {
       # item_id => {
       #   count => price
@@ -85,10 +87,23 @@ class Game
     end
 
     def get_power(count)
+      cache_item = @@cache_power[@item_id]
+      if cache_item.nil?
+        @@cache_power[@item_id] = {}
+      else
+        cache_per_count = cache_item[count]
+        unless cache_per_count.nil?
+          return cache_per_count
+        end
+      end
+
       # power(x):=(p3*x + 1) * p4 ** (p1*x + p2)
       s = @power3 * count + 1
       t = @power4 ** (@power1 * count + @power2)
-      s * t
+      power = s * t
+
+      @@cache_power[@item_id][count] = power
+      power
     end
 
     def get_price(count)
