@@ -19,6 +19,22 @@ class App < Sinatra::Base
     register Sinatra::Reloader
   end
 
+  @@websocket_table = {}
+  configure :development do
+    @@websocket_table = {
+      'dummy' => '',
+    }
+  end
+  configure :production do
+    @@websocket_table = {
+      # room_name => host
+      'dummy' => 'ec2-3-112-238-179.ap-northeast-1.compute.amazonaws.com',
+      'dummy2' => 'ec2-18-183-143-45.ap-northeast-1.compute.amazonaws.com',
+      'dummy3' => 'ec2-54-249-51-129.ap-northeast-1.compute.amazonaws.com',
+      'dummy4' => 'ec2-52-197-92-118.ap-northeast-1.compute.amazonaws.com'
+    }
+  end
+
   get '/initialize' do
     Game.initialize!
     204
@@ -33,8 +49,17 @@ class App < Sinatra::Base
     room_name = ERB::Util.url_encode(params[:room_name])
     path = "/ws/#{room_name}"
 
+    host = @@websocket_table[room_name]
+
+    if host.nil?
+      min_hosts = @@websocket_table.values.group_by {|h| h }.map {|host, hosts| [host, hosts.size]}.min_by {|i| i[1]}
+      min_host = min_hosts[0]
+      @@websocket_table[room_name] = min_host
+      host = min_host
+    end
+
     content_type :json
-    { 'host' => '', 'path' => path }.to_json
+    { 'host' => host, 'path' => path }.to_json
   end
 
   get '/' do
