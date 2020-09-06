@@ -129,6 +129,10 @@ class Game
   end
 
   class << self
+    @@num_cache = {
+      # '20' => 20
+    }
+
     def initialize!
       conn = connect_db
       begin
@@ -143,7 +147,12 @@ class Game
     end
 
     def str2big(s)
-      s.to_i
+      num = @@num_cache[s]
+      return num unless num.nil?
+
+      num = s.to_i
+      @@num_cache[s] = num
+      num
     end
 
     def big2exp(n)
