@@ -331,51 +331,62 @@ class Game
       end
     end
 
-    def get_status(room_name)
+    @@status_cache = {}
+    def get_status(room_name, t0=nil)
       conn = connect_db
 
-      begin
-        conn.query('BEGIN')
+      if t0.nil?
+        t0 = get_current_time(conn) - 200
+      end
 
-        current_time = update_room_time(conn, room_name, 0)
+      if !@@status_cache.has_key?(room_name) || @@status_cache[room_name][0] < t0
+        begin
+          conn.query('BEGIN')
 
-        mitems = {}
-        items = conn.query('SELECT * FROM m_item', symbolize_keys: true).map do |mitem|
-          MItem.new(mitem)
-        end
-        items.each do |item|
-          mitems[item.item_id] = item
-        end
+          current_time = update_room_time(conn, room_name, 0)
 
-        statement = conn.prepare('SELECT time, isu FROM adding WHERE room_name = ?')
-        addings = statement.execute(room_name).map do |fields|
-          Adding.new(room_name, fields['time'], fields['isu'])
-        end
-        statement.close
+          mitems = {}
+          items = conn.query('SELECT * FROM m_item', symbolize_keys: true).map do |mitem|
+            MItem.new(mitem)
+          end
+          items.each do |item|
+            mitems[item.item_id] = item
+          end
 
-        statement = conn.prepare('SELECT item_id, ordinal, time FROM buying WHERE room_name = ?')
-        buyings = statement.execute(room_name).map do |fields|
-          Buying.new(room_name, fields['item_id'], fields['ordinal'], fields['time'])
+          statement = conn.prepare('SELECT time, isu FROM adding WHERE room_name = ?')
+          addings = statement.execute(room_name).map do |fields|
+            Adding.new(room_name, fields['time'], fields['isu'])
+          end
+          statement.close
+
+          statement = conn.prepare('SELECT item_id, ordinal, time FROM buying WHERE room_name = ?')
+          buyings = statement.execute(room_name).map do |fields|
+            Buying.new(room_name, fields['item_id'], fields['ordinal'], fields['time'])
+          end
+          statement.close
+        rescue => e
+          puts e.message
+          puts e.backtrace.join("\n")
+          conn.query('ROLLBACK')
+          conn.close
+          nil
+        else
+          conn.query('COMMIT')
+
+          status = calc_status(current_time, mitems, addings, buyings)
+
+          # calcStatusに時間がかかる可能性があるので タイムスタンプを取得し直す
+          latest_time = get_current_time(conn)
+
+          conn.close
+
+          status.time = latest_time
+          json_status = status.to_json
+          @@status_cache[room_name] = [current_time, json_status]
+          json_status
         end
-        statement.close
-      rescue => e
-        puts e.message
-        puts e.backtrace.join("\n")
-        conn.query('ROLLBACK')
-        conn.close
-        nil
       else
-        conn.query('COMMIT')
-
-        status = calc_status(current_time, mitems, addings, buyings)
-
-        # calcStatusに時間がかかる可能性があるので タイムスタンプを取得し直す
-        latest_time = get_current_time(conn)
-
-        conn.close
-
-        status.time = latest_time
-        status
+        @@status_cache[room_name][1]
       end
     end
 
@@ -513,7 +524,6 @@ class Game
       GameStatus.new(0, gs_adding, schedule, gs_items, gs_on_sale)
     end
 
-    private
 
     def connect_db
       Mysql2::Client.new(
@@ -544,7 +554,7 @@ class Game
     room_name = path[4, path.length - 4]
 
     status = self.class.get_status(room_name)
-    ws.send(status.to_json)
+    ws.send(status)
 
     ws.on :message do |event|
       raw_req = JSON.parse(event.data)
@@ -566,14 +576,20 @@ class Game
         return
       end
 
+      # GameResponse を返却する前に 反映済みの GameStatus を返す
       if success
-        # GameResponse を返却する前に 反映済みの GameStatus を返す
-        status = self.class.get_status(room_name)
-        ws.send(status.to_json)
+        con = self.class.connect_db
+        t = self.class.get_current_time(con)
+        Concurrent::ScheduledTask.new(0.2) do
+          status = self.class.get_status(room_name, t)
+          ws.send(status)
+          res = GameResponse.new(req.request_id, success)
+          ws.send(res.to_json)
+        end.execute
+      else
+        res = GameResponse.new(req.request_id, success)
+        ws.send(res.to_json)
       end
-
-      res = GameResponse.new(req.request_id, success)
-      ws.send(res.to_json)
     end
 
     ws.on :close do |event|
@@ -585,7 +601,7 @@ class Game
       ticker.each do |tick|
         if tick
           status = self.class.get_status(room_name)
-          ws.send(status.to_json)
+          ws.send(status)
         end
       end
     end
